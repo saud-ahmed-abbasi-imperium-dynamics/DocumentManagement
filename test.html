@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simultaneous Editing with Quill Editor</title>
+  <!-- Include Quill library -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <style>
+    #editor-container {
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Simultaneous Editing with Quill Editor</h1>
+  
+  <!-- Display key from URL parameter -->
+  <p>Document Key: <span id="keyDisplay"></span></p>
+  
+  <!-- Quill editor container -->
+  <div id="editor-container">
+    <div id="editor"></div>
+  </div>
+
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <script>
+    // Function to get URL parameter by name
+    function getUrlParameter(name) {
+      name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
+      var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+      var results = regex.exec(location.search);
+      return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    };
+
+    // Initialize Quill editor
+    var editor = new Quill('#editor', {
+      theme: 'snow'  // 'snow' is the default theme for Quill
+    });
+
+    // Function to save content to localStorage
+    function saveContent() {
+      var key = getUrlParameter('key'); // Get key from URL param
+      var content = editor.root.innerHTML; // Get HTML content from editor
+      localStorage.setItem(key, content); // Save content to localStorage
+    }
+
+    // Trigger saveContent() on editor content change
+    editor.on('text-change', function(delta, oldDelta, source) {
+      if (source === 'user') { // Ensure change is from user input
+        saveContent();
+      }
+    });
+
+    // Load initial content from localStorage if key exists in URL param
+    window.onload = function() {
+      var key = getUrlParameter('key');
+      console.log(`=-----------------key ${key}`)
+      var content = localStorage.getItem(key);
+      if (key && content !== null) {
+        editor.root.innerHTML = content; // Set content in editor
+        document.getElementById('keyDisplay').textContent = key; // Display key on the page
+      } else {
+        // Handle case where key is missing or content is not found
+        console.error('Key not provided or content not found in localStorage.');
+      }
+    };
+
+    // Listen for changes in localStorage (triggered by other tabs)
+    window.addEventListener('storage', function(event) {
+      if (event.key === getUrlParameter('key')) {
+        editor.root.innerHTML = event.newValue; // Update editor content
+      }
+    });
+  </script>
+</body>
+</html>
